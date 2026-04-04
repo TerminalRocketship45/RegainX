@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReGainX — Adaptive Mobility</title>
+  <style>
+    :root {
+      --red: #d62828;
+      --blue: #1f4f82;
+      --gray: #f5f5f7;
+      --dark: #0f172a;
+      --text: #243043;
+      --radius: 12px;
+      --shadow: 0 12px 30px rgba(15,23,42,0.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background-color: #fff;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; border-radius: var(--radius); }
+    header {
+      background: #fff;
+      border-bottom: 1px solid rgba(15,23,42,0.08);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+    }
+    .nav-bar {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    /* Logo (replaced text with image). Keeps routing behavior via data-page attr on the anchor) */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    /* Make logo image larger and prevent cropping:
+       - explicit height ensures visibility
+       - object-fit: contain avoids distortion
+       - border-radius reset prevents unintended corner clipping for transparent logos
+    */
+    .logo img {
+      height: 48px;
+      width: auto;
+      max-width: 200px;
+      object-fit: contain;
+      border-radius: 0; /* preserve transparent edges of the logo */
+      display: block;
+    }
+    @media (max-width: 768px) {
+      .logo img { height: 40px; max-width: 140px; }
+    }
+
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+    nav a[aria-current="page"] {
+      color: var(--blue);
+      font-weight: 700;
+    }
+    nav a {
+      font-size: 0.9rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+    nav a:hover {
+      background: rgba(31,79,130,0.08);
+    }
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text);
+      padding: 0.5rem;
+    }
+    .cta-btn, button {
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      font-size: 0.9rem;
+    }
+    .cta-btn { background: var(--red); color: #fff; }
+    .cta-btn:hover { opacity: 0.95; transform: translateY(-1px); }
+    body {
+      padding-top: 70px; /* Space for fixed header */
+      overflow-x: hidden;
+    }
+    main { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      padding: 0;
+      min-height: calc(100vh - 70px);
+      position: relative;
+    }
+    section { margin-bottom: 0; }
+    .page { 
+      display: none; 
+      margin-bottom: 0;
+      width: 100%;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .page.active { display: block; }
+    
+    /* Home page - only the hero box, fills viewport */
+    #home.hero {
+      min-height: calc(100vh - 70px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 2rem;
+      margin: 0;
+    }
+    
+    /* Other pages - regular content, no hero box */
+    .page:not(#home) {
+      padding: 2rem 1.5rem;
+      min-height: calc(100vh - 70px);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
+      gap: 2rem;
+      align-items: center;
+      padding: 3rem 2rem;
+      border-radius: 0;
+      background: linear-gradient(135deg, rgba(214,40,40,0.07), rgba(31,79,130,0.08));
+      box-shadow: none;
+      width: 100%;
+      max-width: 100%;
+    }
+    .hero figure {
+      margin: 0;
+      overflow: hidden;
+      border-radius: var(--radius);
+      height: 100%;
+      max-height: 500px;
+    }
+    .hero figure img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 10%; /* Vertically crop from top to remove black line */
+      border-radius: var(--radius);
+    }
+    .hero h1 { font-size: clamp(2.4rem, 5vw, 3.3rem); margin: 0 0 1rem; color: var(--dark); }
+    .hero p { font-size: 1.1rem; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; }
+    .secondary-btn { background: transparent; border: 1.5px solid var(--blue); color: var(--blue); }
+    .benefits {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .section-title { font-size: 2rem; color: var(--dark); margin-bottom: 1rem; }
+    .split {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+      gap: 2rem;
+      align-items: center;
+    }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 1.5rem; }
+    .use-case { border: 1px solid rgba(15,23,42,0.08); padding: 1.5rem; border-radius: var(--radius); }
+    .testimonials { background: var(--gray); padding: 2.5rem; border-radius: var(--radius); }
+    blockquote { margin: 0; font-style: italic; color: #111827; }
+    .contact-form form {
+      display: grid;
+      gap: 1rem;
+    }
+    label { font-weight: 600; font-size: 0.95rem; }
+    input, textarea {
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(15,23,42,0.2);
+      font: inherit;
+    }
+    textarea { min-height: 140px; }
+    .faq details {
+      border: 1px solid rgba(15,23,42,0.1);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      background: #fff;
+    }
+    .faq details summary { font-weight: 600; cursor: pointer; }
+    .newsletter {
+      padding: 2.5rem;
+      border-radius: 24px;
+      background: var(--dark);
+      color: #fff;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .newsletter form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    .newsletter input {
+      flex: 1 1 240px;
+      border: none;
+      border-radius: 999px;
+    }
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .media-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+    }
+    .media-card figcaption {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    video {
+      width: 100%;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    footer {
+      background: #070b16;
+      color: #e5e7eb;
+      padding: 2rem 1.5rem;
+      margin-top: auto;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+    @media (max-width: 768px) {
+      body { padding-top: 60px; }
+      main { padding: 1.5rem 1rem; min-height: calc(100vh - 60px); }
+      .page { min-height: calc(100vh - 120px); }
+      
+      .nav-bar {
+        padding: 0.5rem 1rem;
+        flex-wrap: wrap;
+      }
+      
+      nav {
+        order: 3;
+        width: 100%;
+        display: none;
+      }
+      nav.active {
+        display: block;
+      }
+      nav ul {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem 0;
+        border-top: 1px solid rgba(15,23,42,0.08);
+      }
+      nav a {
+        display: block;
+        padding: 0.75rem 1rem;
+      }
+      
+      .mobile-menu-toggle {
+        display: block;
+      }
+      
+      .cta-btn {
+        padding: 0.65rem 1.2rem;
+        font-size: 0.85rem;
+      }
+      
+      #home.hero { 
+        padding: 2rem 1.5rem; 
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        min-height: calc(100vh - 60px);
+      }
+      .hero figure {
+        max-height: 300px;
+        order: 2;
+      }
+      .page:not(#home) {
+        padding: 1.5rem 1rem;
+        min-height: calc(100vh - 60px);
+      }
+      .hero h1 { font-size: clamp(1.8rem, 6vw, 2.5rem); }
+      .hero p { font-size: 1rem; }
+      
+      .section-title { font-size: 1.5rem; }
+      .split {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      .grid-3 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      .benefits {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      .newsletter { padding: 1.5rem; }
+      .newsletter form { flex-direction: column; }
+      .testimonials { padding: 1.5rem; }
+      .card { padding: 1rem; }
+    }
+    
+    @media (max-width: 480px) {
+      .nav-bar {
+        padding: 0.5rem;
+      }
+      .logo img { height: 36px; max-width: 120px; }
+      main { padding: 1rem 0.75rem; }
+      #home.hero { padding: 1.5rem 1rem; }
+      .hero figure { max-height: 250px; }
+      .page:not(#home) { padding: 1rem 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav-bar" role="navigation" aria-label="Primary">
+      <!-- Logo replaced by image. The anchor keeps data-page so it behaves like other nav controls -->
+      <a class="logo" href="#home" data-page="home" aria-label="ReGainX home">
+        <img src="logo.png" alt="ReGainX logo" />
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <nav aria-label="Main" role="tablist">
+        <ul>
+          <li><a href="#home" data-page="home" aria-controls="home" role="tab" aria-current="page">Home</a></li>
+          <li><a href="#about" data-page="about" aria-controls="about" role="tab">About</a></li>
+          <li><a href="#product" data-page="product" aria-controls="product" role="tab">Product</a></li>
+          <li><a href="#software" data-page="software" aria-controls="software" role="tab">Software</a></li>
+          <li><a href="#use-cases" data-page="use-cases" aria-controls="use-cases" role="tab">Use Cases</a></li>
+          <li><a href="#feedback" data-page="feedback" aria-controls="feedback" role="tab">Feedback</a></li>
+          <li><a href="#contact" data-page="contact" aria-controls="contact" role="tab">Contact</a></li>
+          <li><a href="#faq" data-page="faq" aria-controls="faq" role="tab">FAQ</a></li>
+        </ul>
+      </nav>
+      <a class="cta-btn" href="#newsletter" data-page="newsletter">Join Waitlist</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section id="home" class="hero page active" role="tabpanel" aria-labelledby="hero-title">
+      <div>
+        <p style="text-transform: uppercase; letter-spacing: .08em; color: var(--blue); font-weight:600;">Adaptive Exoskeleton Technology</p>
+        <h1 id="hero-title">Adaptive Mobility. For Everyone.</h1>
+        <p>ReGainX delivers affordable, real-time exoskeleton assistance for people with motor impairments, enabling everyday movement, confidence, and independence.</p>
+        <div class="hero-actions">
+          <a class="cta-btn" href="#newsletter" data-page="newsletter">Join Waitlist</a>
+          <a class="secondary-btn cta-btn" href="#software" data-page="software">Explore Software</a>
+        </div>
+      </div>
+      <figure aria-label="ReGainX prototype image">
+        <img loading="lazy" src="Screenshot 2025-10-09 230823.png" alt="ReGainX prototype assisting a user in motion captured from simulator footage" />
+      </figure>
+      <div class="benefits" aria-label="Key benefits">
+        <div class="card">
+          <strong>Low-cost & accessible</strong>
+          <p>Engineered for affordability to reach more mobility-challenged individuals worldwide.</p>
+        </div>
+        <div class="card">
+          <strong>Adaptive assistance</strong>
+          <p>Real-time sensing and multi-joint support that responds to each movement.</p>
+        </div>
+        <div class="card">
+          <strong>Daily-use ready</strong>
+          <p>Lightweight frame, ergonomic fit, and battery life designed for everyday routines.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="page" role="tabpanel" hidden>
+      <h2 class="section-title">Our Mission</h2>
+      <div class="split">
+        <div>
+          <p>ReGainX was founded to close the mobility gap worldwide. We blend adaptive robotics with everyday practicality to support people with motor impairments, caregivers who assist them, and clinicians seeking better tools.</p>
+          <p>We focus on three promises: inclusive design, affordability, and measurable quality-of-life impact. Our founding story began with family caregivers looking for an alternative to costly clinical devices—today we collaborate with global non-profits, rehab centers, and early adopters to deliver solutions that matter.</p>
+        </div>
+        <div class="card">
+          <h3>Who Benefits?</h3>
+          <ul>
+            <li>Individuals with motor impairments or progressive conditions</li>
+            <li>Clinicians, PT/OT professionals, and rehab programs</li>
+            <li>Non-profits supporting mobility equity worldwide</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Product -->
+    <section id="product" class="page" role="tabpanel" hidden>
+      <h2 class="section-title">Product & How It Works</h2>
+      <div class="split">
+        <div>
+          <figure class="media-card">
+            <img loading="lazy" src="Screenshot 2025-11-22 193042.png" alt="ReGainX companion app interface showing adaptive control dashboard" />
+            <figcaption>Companion app interface keeps caregivers and clinicians in sync.</figcaption>
+          </figure>
+          <p style="margin-top:1.5rem;">Live demonstration (Simulator + real-time elbow exoskeleton):</p>
+          <video controls preload="metadata" playsinline poster="Screenshot 2025-11-21 225924.png" aria-label="Simulator vs. real-time elbow exoskeleton demo">
+            <source src="Simulator vs. Real-time(Elbow Exo).mp4" type="video/mp4" />
+            Your browser does not support the video tag. Download the demonstration to view.
+          </video>
+          <figcaption style="font-size:0.85rem;color:#4b5563;margin-top:0.5rem;">Demonstration captured in the ReGainX lab showing simulator guidance translated to a real elbow exoskeleton.</figcaption>
+        </div>
+        <div>
+          <h3>Key features</h3>
+          <ul>
+            <li>Multi-joint adaptive actuators with sensor fusion for smoother motion.</li>
+            <li>Smart controller that learns gait patterns to provide tailored assistance.</li>
+            <li>Lightweight modular frame for dressing independence and easy maintenance.</li>
+            <li>Safety redundancies: angle limits, torque limits, energy efficiency.</li>
+          </ul>
+          <h3>How it works</h3>
+          <p>ReGainX uses embedded sensors along elbows, hips, knees, or lower back to capture motion intent in real time. Algorithms translate that data into responsive torque support, providing extra strength precisely when it's needed. Rechargeable batteries last through daily routines, and the system integrates with tele-rehab dashboards for clinicians.</p>
+          <h3>Benefits</h3>
+          <p>Improved endurance, reduced caregiver strain, and faster rehab progress—all within an approachable price point.</p>
+          <div class="media-grid" aria-label="Hardware gallery">
+            <figure class="media-card">
+              <img loading="lazy" src="Screenshot 2025-10-02 215404.png" alt="Lower limb exoskeleton model inside MyoAssist simulator" />
+              <figcaption>Lower-limb configuration visualized in the MyoAssist simulator. <em>Source: MyoAssist simulator</em></figcaption>
+            </figure>
+            <figure class="media-card">
+              <img loading="lazy" src="Screenshot 2025-11-21 225924.png" alt="Elbow exoskeleton alignment referenced in MyoSuite simulator" />
+              <figcaption>Elbow exoskeleton reference from the MyoSuite simulator. <em>Source: MyoSuite simulator</em></figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Software -->
+    <section id="software" class="page" role="tabpanel" hidden>
+      <h2 class="section-title">Software & Control Intelligence</h2>
+      <div class="split">
+        <div>
+          <p>The ReGainX software stack fuses simulator insights with on-body sensors, enabling fast tuning, digital twins, and clinician dashboards. Our adaptive control engine is validated in simulation before deploying to real hardware, shortening iteration cycles.</p>
+          <ul>
+            <li>Edge AI models detect intent and micro-adjust torque outputs every 200ms.</li>
+            <li>Cloud console lets therapists configure modes, monitor usage, and push updates securely.</li>
+            <li>Simulator fidelity ensures what we test virtually performs identically on the exoskeleton.</li>
+          </ul>
+        </div>
+        <figure class="media-card">
+          <img loading="lazy" src="Screenshot 2025-11-22 193042.png" alt="Software analytics dashboard showing gait metrics and adaptive control parameters" />
+          <figcaption>Software analytics dashboard powering insights across pilots.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section id="use-cases" class="page" role="tabpanel" hidden>
+      <h2 class="section-title">Who ReGainX Helps</h2>
+      <div class="grid-3">
+        <article class="use-case">
+          <h3>Elderly with muscle weakness</h3>
+          <p>Gentle lift assistance for standing, walking, and daily chores to keep seniors active longer.</p>
+        </article>
+        <article class="use-case">
+          <h3>Parkinson's-affected movement</h3>
+          <p>Smooths gait irregularities with adaptive stride support, reducing fatigue and fall risk.</p>
+        </article>
+        <article class="use-case">
+          <h3>Age-related mobility decline</h3>
+          <p>Boosts confidence to move independently at home, at work, or out in the community.</p>
+        </article>
+        <article class="use-case">
+          <h3>Everyday use</h3>
+          <p>Helps with repetitive tasks like walking long corridors, lifting light items, or reaching overhead.</p>
+        </article>
+        <article class="use-case">
+          <h3>Caregiver partnerships</h3>
+          <p>Reduces strain by sharing effort with the exoskeleton, enabling collaborative transfers and exercises.</p>
+        </article>
+        <article class="use-case">
+          <h3>Clinical rehabilitation</h3>
+          <p>Tracks progress with data for clinicians, supporting therapy goals and telehealth coaching.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Feedback -->
+    <section id="feedback" class="page" role="tabpanel" hidden>
+      <h2 class="section-title">Feedback & Pilot Results</h2>
+      <div class="testimonials">
+        <blockquote>
+          "Sounds cool!"
+        </blockquote>
+        <p>— 67 year old Parkinson's patient</p>
+        <blockquote>
+          "Your efforts and dedication are commendable!"
+        </blockquote>
+        <p>— Executive Director, DAPS (Dallas Area Parkinson's Society)</p>
+        <div style="margin-top:1.5rem;">
+          <a class="cta-btn" href="#contact" data-page="contact">Join Pilot Program</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact / Newsletter -->
+    <section id="contact" class="contact-form page" role="tabpanel" hidden>
+      <h2 class="section-title">Contact & Get Involved</h2>
+      <div class="split">
+        <form aria-label="Contact form">
+          <label for="name">Name</label>
+          <input id="name" name="name" type="text" placeholder="Your name" required />
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@email.com" required />
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="Tell us how we can help" required></textarea>
+          <button class="cta-btn" type="submit">Contact Us</button>
+        </form>
+        <div>
+          <div class="card">
+            <h3>Reach us</h3>
+            <p>Email: <a href="mailto:Rohannb02@gmail.com">Rohannb02@gmail.com</a></p>
+            <p>Phone: <a href="tel:+14698949878">469-894-9878</a></p>
+            <p>Social: @ReGainX on YouTube</p>
+          </div>
+          <div class="card" style="margin-top:1rem;">
+            <h3>Accessibility & Compliance</h3>
+            <p>We design exoskeletons with personalized assistance to all users, all severities, all income levels; aiding those with mobility impairments, and providing a solution with caregivers and clinicians.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section id="newsletter" class="newsletter page" aria-labelledby="newsletter-title" role="tabpanel" hidden>
+      <h2 id="newsletter-title">Stay in the ReGainX loop</h2>
+      <p>Get prototype updates, pilot invitations, and product availability first.</p>
+      <form>
+        <label class="sr-only" for="newsletter-email">Email</label>
+        <input id="newsletter-email" type="email" placeholder="Email address" required aria-label="Email address" />
+        <button class="cta-btn" type="submit">Get Notified</button>
+      </form>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="faq page" role="tabpanel" hidden>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div class="grid-3">
+        <details>
+          <summary>Is ReGainX safe for daily use?</summary>
+          <p>Yes. The exoskeleton includes non-invasive  sensors, torque limits, and auto-stop features.</p>
+        </details>
+        <details>
+          <summary>Who can use it?</summary>
+          <p>Designed for adults with mobility impairments or strength loss, primarily designed for Parkinson's patients; clinicians determine suitability during onboarding.</p>
+        </details>
+        <details>
+          <summary>How much will it cost?</summary>
+          <p>Final pricing will be announced ahead of launch, targeting a fraction of current clinical exoskeletons with financing options. Currenlty Elbow exoskeleton is nearing $130, while lower-limb exoskeletons are in development</p>
+        </details>
+        <details>
+          <summary>What about sizing?</summary>
+          <p>Modular frames and straps adjust for a wide range of body types, and fittings can be done at home or in clinics. The exoskeleton is designed to be used by anyone, regardless of age, gender, or body type.</p>
+        </details>
+        <details>
+          <summary>Do I need training?</summary>
+          <p>No, however a short onboarding session is recommended; remote coaching and video guides will be included.</p>
+        </details>
+        <details>
+          <summary>Maintenance requirements?</summary>
+          <p>Tool-free module swaps, washable liners, and quarterly software updates pushed over Wi-Fi.</p>
+        </details>
+        <details>
+          <summary>When will it ship?</summary>
+          <p>Pilot shipments begin next year with rolling availability by region; join the waitlist for updates.</p>
+        </details>
+        <details>
+          <summary>Can clinicians monitor progress?</summary>
+          <p>Yes. Secure dashboards track gait metrics, battery health, and adherence for care teams.</p>
+        </details>
+        <details>
+          <summary>Does it work outdoors?</summary>
+          <p>Weather-resistant materials and sealed components support outdoor walking and commuting.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <strong style="color: var(--red); font-size:1.1rem;">ReGainX</strong>
+        <p>© <span id="year"></span> ReGainX. All rights reserved.</p>
+      </div>
+      <div>
+        <p><a href="#">Privacy Policy</a> · <a href="#">Terms of Use</a></p>
+        <p>Follow us: LinkedIn · Instagram · YouTube</p>
+      </div>
+      <div>
+        <p>Contact: <a href="mailto:Rohannb02@gmail.com">Rohannb02@gmail.com</a></p>
+        <p>Phone: 469-894-9878</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Accessibility helper
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Simple client-side routing to simulate multipage experience
+    const pages = document.querySelectorAll('.page');
+    const pageControls = document.querySelectorAll('[data-page]');
+
+    function setActivePage(targetId) {
+      let found = false;
+      pages.forEach(section => {
+        const isActive = section.id === targetId;
+        section.classList.toggle('active', isActive);
+        section.hidden = !isActive;
+        if (isActive) found = true;
+      });
+      pageControls.forEach(control => {
+        const matches = control.dataset.page === targetId;
+        if (matches) {
+          control.setAttribute('aria-current', 'page');
+        } else {
+          control.removeAttribute('aria-current');
+        }
+      });
+      
+      if (!found && targetId !== 'home') {
+        setActivePage('home');
+      }
+    }
+
+    function handleControlClick(event) {
+      const control = event.target.closest('[data-page]');
+      if (!control) return;
+      const page = control.dataset.page;
+      if (!page) return;
+      if (control.tagName === 'A') event.preventDefault();
+      history.replaceState(null, '', `#${page}`);
+      setActivePage(page);
+      // Always scroll to top when switching pages
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      // Close mobile menu if open
+      const nav = document.querySelector('nav');
+      const menuToggle = document.querySelector('.mobile-menu-toggle');
+      if (nav && menuToggle) {
+        nav.classList.remove('active');
+        menuToggle.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    pageControls.forEach(ctrl => ctrl.addEventListener('click', handleControlClick));
+    
+    // Mobile menu toggle
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+    const nav = document.querySelector('nav');
+    if (menuToggle && nav) {
+      menuToggle.addEventListener('click', () => {
+        const isActive = nav.classList.toggle('active');
+        menuToggle.setAttribute('aria-expanded', isActive);
+      });
+    }
+
+    window.addEventListener('load', () => {
+      const requested = window.location.hash.replace('#', '') || 'home';
+      setActivePage(requested);
+    });
+
+    window.addEventListener('hashchange', () => {
+      const requested = window.location.hash.replace('#', '') || 'home';
+      setActivePage(requested);
+    });
+  </script>
+</body>
+</html>

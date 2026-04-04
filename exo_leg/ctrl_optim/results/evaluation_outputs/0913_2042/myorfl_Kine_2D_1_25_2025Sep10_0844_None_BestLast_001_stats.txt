@@ -1,0 +1,16 @@
+Quick Kinematics Analysis Summary
+===================================================
+Simulation: myorfl_Kine_2D_1_25_2025Sep10_0844_None_BestLast_001
+Duration: 5s
+Timesteps: 194
+
+Right Leg Statistics:
+  Hip   - Mean:   23.3deg | Std:  23.0deg | Min:  -21.8deg | Max:   57.8deg
+  Knee  - Mean:   32.4deg | Std:  30.0deg | Min:   -4.7deg | Max:   82.9deg
+  Ankle - Mean:  -17.1deg | Std:  31.1deg | Min:  -68.5deg | Max:   24.6deg
+
+Left Leg Statistics:
+  Hip   - Mean:   12.2deg | Std:  22.4deg | Min:  -22.1deg | Max:   53.5deg
+  Knee  - Mean:   16.2deg | Std:  21.2deg | Min:   -5.0deg | Max:   67.2deg
+  Ankle - Mean:   -6.8deg | Std:  23.6deg | Min:  -72.6deg | Max:   23.1deg
+

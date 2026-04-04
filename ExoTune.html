@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLHF Feedback Interface for Exoskeleton</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1f2b 0%, #2c3e50 50%, #34495e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #ffffff;
+        }
+
+        .container {
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 1.8rem;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .description {
+            font-size: 0.9rem;
+            color: #95a5a6;
+            line-height: 1.5;
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        .feedback-section {
+            margin: 30px 0;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .feedback-button {
+            padding: 18px 20px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            min-height: 60px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .feedback-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .feedback-button:hover::before {
+            left: 100%;
+        }
+
+        .feedback-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .feedback-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .reward-button {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: #ffffff;
+        }
+
+        .reward-button:hover {
+            background: linear-gradient(135deg, #229954 0%, #27ae60 100%);
+        }
+
+        .neutral-button {
+            background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);
+            color: #ffffff;
+        }
+
+        .neutral-button:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+        }
+
+        .penalize-button {
+            background: linear-gradient(135deg, #e74c3c 0%, #ec7063 100%);
+            color: #ffffff;
+        }
+
+        .penalize-button:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+        }
+
+        .data-button, .edit-button {
+            background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%);
+            color: #ffffff;
+        }
+
+        .data-button:hover, .edit-button:hover {
+            background: linear-gradient(135deg, #6c7b7d 0%, #7f8c8d 100%);
+        }
+
+        .button-icon {
+            font-size: 1.4rem;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+        }
+
+        .button-text {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            margin-top: 25px;
+            padding: 15px 20px;
+            background: rgba(52, 73, 94, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: #ecf0f1;
+            backdrop-filter: blur(5px);
+        }
+
+        .footer {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            color: #95a5a6;
+        }
+
+        /* Accessibility improvements */
+        .feedback-button:focus {
+            outline: 3px solid #3498db;
+            outline-offset: 2px;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px 20px;
+                margin: 10px;
+            }
+            
+            .title {
+                font-size: 1.6rem;
+            }
+            
+            .feedback-button {
+                padding: 16px 18px;
+                font-size: 0.95rem;
+                min-height: 55px;
+            }
+            
+            .button-icon {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .feedback-button {
+                border: 2px solid #ffffff;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .feedback-button {
+                transition: none;
+            }
+            
+            .feedback-button:hover {
+                transform: none;
+            }
+            
+            .feedback-button::before {
+                display: none;
+            }
+        }
+
+        /* Dark mode enhancements */
+        @media (prefers-color-scheme: dark) {
+            .container {
+                background: rgba(26, 31, 43, 0.95);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">ReGainX Tune</h1>
+            <h2 class="subtitle">Exoskeleton Control System</h2>
+            <p class="description">
+                Provide feedback to help the reinforcement learning model learn your preferred assistance style. 
+                Your input helps personalize the exoskeleton's support for your specific needs.
+            </p>
+        </div>
+
+        <div class="feedback-section">
+            <h3 class="section-title">Provide Feedback</h3>
+            <div class="buttons-grid">
+                <button class="feedback-button reward-button" onclick="provideFeedback('reward')" 
+                        aria-label="Reward - Positive feedback to the agent">
+                    <div class="button-icon">✅</div>
+                    <div class="button-text">Reward</div>
+                </button>
+                
+                <button class="feedback-button neutral-button" onclick="provideFeedback('neutral')" 
+                        aria-label="Do Nothing - Neutral feedback">
+                    <div class="button-icon">➖</div>
+                    <div class="button-text">Do Nothing</div>
+                </button>
+                
+                <button class="feedback-button penalize-button" onclick="provideFeedback('penalize')" 
+                        aria-label="Penalize - Negative feedback to the agent">
+                    <div class="button-icon">❌</div>
+                    <div class="button-text">Penalize</div>
+                </button>
+                
+                <button class="feedback-button data-button" onclick="viewDataLogs()" 
+                        aria-label="View Data and Logs">
+                    <div class="button-icon">📊</div>
+                    <div class="button-text">View Data/Logs</div>
+                </button>
+                
+                <button class="feedback-button edit-button" onclick="editSuggestions()" 
+                        aria-label="Edit Suggestions">
+                    <div class="button-icon">✏️</div>
+                    <div class="button-text">Edit Suggestions</div>
+                </button>
+            </div>
+        </div>
+
+        <div class="status-indicator" id="statusIndicator">
+            Ready to receive feedback. Click any button above to provide input.
+        </div>
+
+        <div class="footer">
+            <p>RLHF Interface for Exoskeleton Control System | Prototype Version</p>
+        </div>
+    </div>
+
+    <script>
+        let feedbackCount = 0;
+        let feedbackHistory = [];
+
+        function provideFeedback(type) {
+            feedbackCount++;
+            const timestamp = new Date().toISOString();
+            const feedback = {
+                type: type,
+                timestamp: timestamp,
+                count: feedbackCount
+            };
+            
+            feedbackHistory.push(feedback);
+            
+            // Log to console as requested in the original prompt
+            console.log(`Feedback ${feedbackCount}: ${type.toUpperCase()} at ${timestamp}`);
+            console.log('Full feedback history:', feedbackHistory);
+            
+            // Update status indicator
+            updateStatusIndicator(type);
+            
+            // Visual feedback
+            showButtonFeedback(type);
+        }
+
+        function updateStatusIndicator(type) {
+            const statusElement = document.getElementById('statusIndicator');
+            const typeLabels = {
+                'reward': 'Positive feedback recorded ✅',
+                'neutral': 'Neutral feedback recorded ➖',
+                'penalize': 'Negative feedback recorded ❌'
+            };
+            
+            statusElement.textContent = `${typeLabels[type]} | Total feedback: ${feedbackCount}`;
+        }
+
+        function showButtonFeedback(type) {
+            const button = event.target.closest('.feedback-button');
+            const originalTransform = button.style.transform;
+            
+            // Add visual feedback
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = originalTransform;
+            }, 150);
+        }
+
+        function viewDataLogs() {
+            // Opens a blank page as specified in the original prompt
+            // Eventually this will display fatigue levels, assistance torque history, and logs for doctors
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Exoskeleton Data & Logs</title>
+                    <style>
+                        body { 
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            padding: 20px; 
+                            background: linear-gradient(135deg, #1a1f2b 0%, #2c3e50 100%);
+                            color: #ffffff;
+                            min-height: 100vh;
+                        }
+                        .container {
+                            background: rgba(44, 62, 80, 0.9);
+                            padding: 30px;
+                            border-radius: 16px;
+                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                            max-width: 600px;
+                            margin: 0 auto;
+                        }
+                        h1 { 
+                            color: #ffffff; 
+                            margin-bottom: 20px;
+                            font-size: 2rem;
+                        }
+                        .placeholder {
+                            text-align: center;
+                            color: #bdc3c7;
+                            margin: 50px 0;
+                            font-size: 1.1rem;
+                        }
+                        ul {
+                            text-align: left;
+                            max-width: 400px;
+                            margin: 20px auto;
+                            background: rgba(52, 73, 94, 0.5);
+                            padding: 20px;
+                            border-radius: 12px;
+                        }
+                        li {
+                            margin: 10px 0;
+                            padding: 5px 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>Exoskeleton Data & Logs</h1>
+                        <div class="placeholder">
+                            <p>📊 Data visualization will be implemented here</p>
+                            <p>This will include:</p>
+                            <ul>
+                                <li>Fatigue level monitoring</li>
+                                <li>Assistance torque history</li>
+                                <li>EMG signal analysis</li>
+                                <li>IMU motion data</li>
+                                <li>RLHF feedback logs</li>
+                                <li>Performance metrics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        function editSuggestions() {
+            // Placeholder for edit suggestions functionality
+            const suggestions = prompt('Enter your suggestions for the exoskeleton control system:');
+            if (suggestions && suggestions.trim()) {
+                const timestamp = new Date().toISOString();
+                console.log(`Suggestion submitted at ${timestamp}: ${suggestions}`);
+                
+                // Update status indicator
+                const statusElement = document.getElementById('statusIndicator');
+                statusElement.textContent = `Suggestion recorded: "${suggestions.substring(0, 50)}${suggestions.length > 50 ? '...' : ''}"`;
+                
+                // Visual feedback
+                const button = event.target.closest('.feedback-button');
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = '';
+                }, 150);
+            }
+        }
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '1') {
+                document.querySelector('.reward-button').click();
+            } else if (event.key === '2') {
+                document.querySelector('.neutral-button').click();
+            } else if (event.key === '3') {
+                document.querySelector('.penalize-button').click();
+            } else if (event.key === '4') {
+                document.querySelector('.data-button').click();
+            } else if (event.key === '5') {
+                document.querySelector('.edit-button').click();
+            }
+        });
+
+        // Initialize
+        console.log('RLHF Feedback Interface initialized');
+        console.log('Keyboard shortcuts: 1=Reward, 2=Do Nothing, 3=Penalize, 4=View Data, 5=Edit Suggestions');
+    </script>
+</body>
+</html>

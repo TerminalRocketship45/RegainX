@@ -1,0 +1,113 @@
+================================================================================
+MODEL ACCURACY EVALUATION REPORT
+PPO Exoskeleton - Movement Restoration Analysis
+================================================================================
+
+EVALUATION CONFIGURATION:
+  Total Episodes: 100
+  Initial Position: Always 0.0 rad
+  Target Batches: 4 (equally distributed)
+  PD Severity Batches: 4 (MF = 0.70, 0.80, 0.90, 0.9999)
+  Max Steps per Episode: 500
+
+================================================================================
+OVERALL PERFORMANCE METRICS
+================================================================================
+
+  Average Movement Restored: 96.35%
+  Standard Deviation: 4.84%
+  Minimum: 74.07%
+  Maximum: 99.95%
+  Median: 97.92%
+  25th Percentile: 95.65%
+  75th Percentile: 99.36%
+
+================================================================================
+PERFORMANCE BY TARGET POSITION BATCH
+================================================================================
+
+  Batch 0 (0.0-0.6 rad):
+    Episodes: 25
+    Mean: 99.42%
+    Std Dev: 0.55%
+    Min: 97.77%
+    Max: 99.95%
+
+  Batch 1 (0.6-1.2 rad):
+    Episodes: 25
+    Mean: 98.08%
+    Std Dev: 1.31%
+    Min: 95.55%
+    Max: 99.94%
+
+  Batch 2 (1.2-1.8 rad):
+    Episodes: 25
+    Mean: 95.73%
+    Std Dev: 4.47%
+    Min: 79.22%
+    Max: 99.93%
+
+  Batch 3 (1.8-2.4 rad):
+    Episodes: 25
+    Mean: 92.18%
+    Std Dev: 6.57%
+    Min: 74.07%
+    Max: 99.01%
+
+================================================================================
+PERFORMANCE BY PD SEVERITY LEVEL
+================================================================================
+
+  MF=0.70:
+    Episodes: 25
+    Mean: 97.16%
+    Std Dev: 3.16%
+    Min: 87.28%
+    Max: 99.95%
+
+  MF=0.80:
+    Episodes: 25
+    Mean: 97.71%
+    Std Dev: 2.33%
+    Min: 90.91%
+    Max: 99.82%
+
+  MF=0.90:
+    Episodes: 25
+    Mean: 95.93%
+    Std Dev: 5.83%
+    Min: 74.07%
+    Max: 99.94%
+
+  MF=0.9999:
+    Episodes: 25
+    Mean: 94.62%
+    Std Dev: 6.43%
+    Min: 74.84%
+    Max: 99.93%
+
+================================================================================
+POSE ERROR STATISTICS
+================================================================================
+
+  Average Pose Error: 0.087513 rad
+  Std Dev: 0.116168 rad
+  Min: 0.001189 rad
+  Max: 0.622249 rad
+
+================================================================================
+CONCLUSION
+================================================================================
+
+The PPO exoskeleton model demonstrated an average movement
+restoration of 96.35% across 100 episodes
+with varied target positions and PD severity levels.
+
+The model shows robust generalization across:
+  - Target position ranges (0.0 to 2.4 rad)
+  - PD severity levels (MF: 0.70 to 0.9999)
+
+Standard deviation of 4.84%
+indicates consistent performance across diverse conditions.
+
+================================================================================
